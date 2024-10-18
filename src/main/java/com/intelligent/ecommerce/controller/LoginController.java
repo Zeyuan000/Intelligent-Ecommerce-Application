@@ -1,45 +1,43 @@
 package com.intelligent.ecommerce.controller;
 
-import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
-import com.google.firebase.cloud.FirestoreClient;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.QuerySnapshot;
+import com.intelligent.ecommerce.model.LoginRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/api")
 public class LoginController {
 
+    @Autowired
+    private Firestore firestore;
+
     @PostMapping("/login")
-    public ResponseEntity<String> authenticateUser(@RequestBody Map<String, String> userInfo) {
-        String username = userInfo.get("username");
-        String password = userInfo.get("password");
+    public ResponseEntity<String> authenticateUser(@RequestBody LoginRequest userInfo) {
+        String username = userInfo.getUsername();
+        String password = userInfo.getPassword();
 
-        Firestore db = FirestoreClient.getFirestore();
-
+        // Firestore查找比对
         try {
-            // 获取Firestore中存储的用户数据
-            DocumentSnapshot document = db.collection("Users").document(username).get().get();
+            QuerySnapshot querySnapshot = firestore.collection("Users").whereEqualTo("username", username).get().get();
+            List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
 
-            if (document.exists()) {
-                String storedPassword = document.getString("password");
-
-                // 检查密码是否匹配
+            if (!documents.isEmpty()) {
+                String storedPassword = documents.get(0).getString("password");
                 if (storedPassword != null && storedPassword.equals(password)) {
-                    return ResponseEntity.ok("Success");
+                    return ResponseEntity.ok("Login successful");
                 } else {
-                    return ResponseEntity.status(401).body("Fail:Incorrect password");
+                    return ResponseEntity.status(401).body("Wrong password");
                 }
             } else {
-                return ResponseEntity.status(404).body("Fail:User does not exist");
+                return ResponseEntity.status(404).body("User not found");
             }
-
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Server Error");

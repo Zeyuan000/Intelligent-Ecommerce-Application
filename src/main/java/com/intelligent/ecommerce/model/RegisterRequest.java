@@ -1,6 +1,6 @@
 package com.intelligent.ecommerce.model;
 
-public class LoginRequest {
+public class RegisterRequest {
     public String getUsername() {
         return username;
     }
