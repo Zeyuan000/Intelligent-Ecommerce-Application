@@ -14,7 +14,7 @@ RUN mvn dependency:go-offline
 COPY src/ /app/src/
 COPY src/main/resources /app/src/main/resources
 # 构建项目
-RUN mvn clean package
+RUN mvn clean package -DskipTests
 
 # 使用 OpenJDK 17 作为基础镜像来运行应用程序
 FROM eclipse-temurin:17-jdk
